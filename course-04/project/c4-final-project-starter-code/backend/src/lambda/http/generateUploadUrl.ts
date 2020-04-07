@@ -2,6 +2,7 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
 import * as AWS  from 'aws-sdk'
 
+import {getUserId} from '../utils';
 import {createLogger} from '../../utils/logger'
 import {checkTodoExists, addTodoAttachmentUrl} from '../../businessLogic/todos';
 
@@ -14,8 +15,9 @@ const s3 = new AWS.S3({
 });
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId;
+  const currentUserId = getUserId(event);
 
-  const validTodoId = await checkTodoExists(todoId);
+  const validTodoId = await checkTodoExists(currentUserId, todoId);
   if (!validTodoId){
     logger.info(`Cannot find todo with todoId: ${todoId}`);
     return {
@@ -28,7 +30,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
  
   const uploadUrl = await getUploadUrl(todoId);
-  await addTodoAttachmentUrl(todoId);
+  await addTodoAttachmentUrl(currentUserId, todoId);
 
   return {
     statusCode: 201,

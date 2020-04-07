@@ -3,15 +3,16 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
 
 import { createLogger } from '../../utils/logger'
+import {getUserId} from '../utils';
 import {deleteTodo, checkTodoExists} from '../../businessLogic/todos';
-
 const logger = createLogger('deleteTodoHandler');
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const todoId = event.pathParameters.todoId
+  const todoId = event.pathParameters.todoId;
+  const currentUserId = getUserId(event);
   logger.info(`Request to delete todo with Id ${todoId}`);
 
-  const doesTodoExists = await checkTodoExists(todoId);
+  const doesTodoExists = await checkTodoExists(currentUserId, todoId);
   if (!doesTodoExists) {
     return {
       statusCode: 404,
@@ -23,7 +24,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
 
   try {
-    await deleteTodo(todoId);
+    await deleteTodo(currentUserId, todoId);
     return {
       statusCode: 200,
       headers: {

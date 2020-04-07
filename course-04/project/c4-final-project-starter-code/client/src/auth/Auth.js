@@ -45,11 +45,11 @@ export default class Auth {
   }
 
   getAccessToken() {
-    return this.accessToken;
+    return this.accessToken || localStorage.getItem('accessToken');
   }
 
   getIdToken() {
-    return this.idToken;
+    return this.idToken || localStorage.getItem('idToken');
   }
 
   setSession(authResult) {
@@ -62,6 +62,10 @@ export default class Auth {
     this.idToken = authResult.idToken;
     this.expiresAt = expiresAt;
 
+    // persist in local storage instead of in memory
+    // https://knowledge.udacity.com/questions/76512
+    localStorage.setItem('accessToken', this.accessToken);
+    localStorage.setItem('idToken', this.idToken);
     // navigate to the home route
     this.history.replace('/');
   }
@@ -86,6 +90,8 @@ export default class Auth {
 
     // Remove isLoggedIn flag from localStorage
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('idToken');
 
     this.auth0.logout({
       return_to: window.location.origin
@@ -98,7 +104,12 @@ export default class Auth {
   isAuthenticated() {
     // Check whether the current time is past the
     // access token's expiry time
-    let expiresAt = this.expiresAt;
-    return new Date().getTime() < expiresAt;
+    // let expiresAt = this.expiresAt;
+    // return new Date().getTime() < expiresAt;
+
+    // check if the local storage `accessToken` is still set
+    const accessToken = localStorage.getItem('accessToken');
+    const idToken = localStorage.getItem('idToken');
+    return !!(accessToken && idToken);
   }
 }

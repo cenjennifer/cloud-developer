@@ -2,6 +2,7 @@ import 'source-map-support/register'
 
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 
+import {getUserId} from '../utils';
 import { createLogger } from '../../utils/logger'
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 import {updateTodo, checkTodoExists} from '../../businessLogic/todos';
@@ -9,9 +10,10 @@ import {updateTodo, checkTodoExists} from '../../businessLogic/todos';
 const logger = createLogger('updateTodoHandler');
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId;
+  const currentUserId = getUserId(event);
   const updatedTodo: UpdateTodoRequest = JSON.parse(event.body);
 
-  const doesTodoExists = await checkTodoExists(todoId);
+  const doesTodoExists = await checkTodoExists(currentUserId, todoId);
   if (!doesTodoExists) {
     return {
       statusCode: 404,
@@ -23,7 +25,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
 
   try {
-    await updateTodo(todoId, updatedTodo);
+    await updateTodo(currentUserId, todoId, updatedTodo);
     return {
       statusCode: 200,
       headers: {

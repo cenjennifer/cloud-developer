@@ -2,6 +2,7 @@ service:
   name: serverless-todo-app
 
 plugins:
+  - serverless-domain-manager
   - serverless-webpack
   - serverless-iam-roles-per-function
   - serverless-aws-documentation
@@ -29,8 +30,19 @@ provider:
     SIGNED_URL_EXPIRATION: 300
     AUTH_0_SECRET_ID: Auth0Secret-${self:provider.stage}
     AUTH_0_SECRET_FIELD: auth0Secret
+  
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - cloudfront:updateDistribution
+      Resource: "*"
 
 custom:
+  customDomain:
+    domainName: jennifercen.tech
+    basePath: ${self:provider.stage}
+    stage: ${self:provider.stage}
+    createRoute53Record: true
   documentation:
     api:
       info:
@@ -46,7 +58,6 @@ custom:
         schema: ${file(src/models/update-todo-request.json)}
 
 functions:
-
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
@@ -66,7 +77,7 @@ functions:
         # Since user only has access to their own todos only able to access table with their associated index
         # Recap: https://youtu.be/NuL_FT1DJH0 (4:18)
         # https://classroom.udacity.com/nanodegrees/nd9990/parts/a46aa194-de1d-45fd-83ef-d83080ee8f3c/modules/826241f6-8d5f-436b-b01e-4ea8885d866d/lessons/f0d2e109-7647-4660-b88e-862551411d33/concepts/a6de72ca-d983-4083-946f-dbebebd21419
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_USER_INDEX}
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODO_ID_INDEX}
 
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
@@ -106,7 +117,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-          - dynamodb:Query
+          - dynamodb:GetItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
   DeleteTodo:
@@ -123,7 +134,7 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - dynamodb:Query
+          - dynamodb:GetItem
           - dynamodb:DeleteItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 
@@ -142,7 +153,7 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:UpdateItem
-          - dynamodb:Query
+          - dynamodb:GetItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
       - Effect: Allow
         Action:
@@ -205,16 +216,22 @@ resources:
             AttributeType: S
           - AttributeName: userId
             AttributeType: S
+          - AttributeName: dueDate
+            AttributeType: S
         KeySchema:
-          - AttributeName: todoId
+          - AttributeName: userId
             KeyType: HASH
+          - AttributeName: todoId
+            KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
-        GlobalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TODOS_USER_INDEX}
+        LocalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.TODO_ID_INDEX}
             KeySchema:
             - AttributeName: userId
               KeyType: HASH
+            - AttributeName: dueDate
+              KeyType: RANGE
             Projection:
               ProjectionType: ALL
 
