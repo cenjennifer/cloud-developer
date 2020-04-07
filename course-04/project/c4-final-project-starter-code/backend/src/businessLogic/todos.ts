@@ -1,5 +1,6 @@
 import * as uuid from 'uuid'
 
+import { TodosResponse } from '../models/TodoItemsResponse'
 import { TodoItem } from '../models/TodoItem';
 import { TodoAccess } from '../dataLayer/todosAccess';
 import { CreateTodoRequest } from '../requests/CreateTodoRequest';
@@ -7,8 +8,8 @@ import { UpdateTodoRequest } from '../requests/UpdateTodoRequest';
 
 const todosAccess = new TodoAccess();
 
-export async function getAllTodosByUserId(userId: string) : Promise<TodoItem[]> {
-  return todosAccess.getAllTodosByUserId(userId);
+export async function getAllTodosByUserId(userId: string, params) : Promise<TodosResponse> {
+  return todosAccess.getAllTodosByUserId(userId, params);
 }
 
 export async function createTodo(todoItem: CreateTodoRequest, userId: string) : Promise<TodoItem> {
@@ -25,24 +26,24 @@ export async function createTodo(todoItem: CreateTodoRequest, userId: string) : 
   return todosAccess.createTodo(newTodoItem);
 }
 
-export async function updateTodo(todoId: string, updateTodo: UpdateTodoRequest) : Promise<UpdateTodoRequest> {
-  return todosAccess.updateTodo(todoId, updateTodo);
+export async function updateTodo(userId: string, todoId: string, updateTodo: UpdateTodoRequest) : Promise<UpdateTodoRequest> {
+  return todosAccess.updateTodo(userId, todoId, updateTodo);
 }
 
-export async function deleteTodo(todoId: string) {
-  return todosAccess.deleteTodo(todoId);
+export async function deleteTodo(userId: string, todoId: string) {
+  return todosAccess.deleteTodo(userId, todoId);
 }
 
-export async function checkTodoExists(todoId: string) {
-  return todosAccess.checkTodoExists(todoId);
+export async function checkTodoExists(currentUserId: string, todoId: string) {
+  return todosAccess.checkTodoExists(currentUserId, todoId);
 }
 
-export async function getTodoItem(todoId: string) {
-  return todosAccess.getTodoItem(todoId);
+export async function getTodoItem(currentUserId: string, todoId: string) {
+  return todosAccess.getTodoItem(currentUserId, todoId);
 }
 
-export async function addTodoAttachmentUrl(todoId: string) {
+export async function addTodoAttachmentUrl(userId: string, todoId: string) {
   const bucketName = process.env.ATTACHMENTS_IMAGES_S3_BUCKET;
   const attachmentUrl =  `https://${bucketName}.s3.amazonaws.com/${todoId}`;
-  return todosAccess.addTodoAttachmentUrl(todoId, attachmentUrl);
+  return todosAccess.addTodoAttachmentUrl(userId, todoId, attachmentUrl);
 }
