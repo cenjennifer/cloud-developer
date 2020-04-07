@@ -27,6 +27,7 @@ interface TodosState {
   todos: Todo[]
   newTodoName: string
   loadingTodos: boolean
+  nextKey?: string
 }
 
 export class Todos extends React.PureComponent<TodosProps, TodosState> {
@@ -89,16 +90,21 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     }
   }
 
-  async componentDidMount() {
+  onGetTodos = async () => {
     try {
-      const todos = await getTodos(this.props.auth.getIdToken())
+      const {items, nextKey} = await getTodos(this.props.auth.getIdToken(), this.state.nextKey)
       this.setState({
-        todos,
-        loadingTodos: false
+        todos: this.state.todos.concat(items),
+        loadingTodos: false,
+        nextKey, // will equal to null if there is no more items
       })
     } catch (e) {
       alert(`Failed to fetch todos: ${e.message}`)
     }
+  }
+
+  async componentDidMount() {
+    this.onGetTodos();
   }
 
   render() {
@@ -109,7 +115,15 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         {this.renderCreateTodoInput()}
 
         {this.renderTodos()}
+
+        {this.state.nextKey && this.renderViewMoreTodos()}
       </div>
+    )
+  }
+
+  renderViewMoreTodos() {
+    return (
+      <Button onClick={() => this.onGetTodos()}>View More Todos</Button>
     )
   }
 
@@ -172,7 +186,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                 {todo.name}
               </Grid.Column>
               <Grid.Column width={3} floated="right">
-                {todo.dueDate}
+                {dateFormat(todo.dueDate, 'isoUtcDateTime')}
               </Grid.Column>
               <Grid.Column width={1} floated="right">
                 <Button
@@ -208,7 +222,6 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   calculateDueDate(): string {
     const date = new Date()
     date.setDate(date.getDate() + 7)
-
-    return dateFormat(date, 'yyyy-mm-dd') as string
+    return dateFormat(date, 'isoDateTime') as string
   }
 }
