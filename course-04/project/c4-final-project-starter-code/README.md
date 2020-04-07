@@ -1,3 +1,19 @@
+# Capstone Enhanced Serverless TODO
+Additional features supported:
+- Custom domain name to server less API route: `jennifercen.tech/${stage}` e.g. `jennifercen.tech/dev`
+- Implemented pagination support. By default, limit 2 items per query
+- Updated dynamnoDB schema so that Todos are sorted by due date
+- Updated client to save token in localStorage to prevent lost of token after every page refresh
+ 
+You can run the client app locally by cd /client and then `npm i` && `npm start dev`. This will build the client app and run it locally on localhost:3000
+
+You can find the backend serverless endpoint with this custom domain: `https://jennifercen.tech/dev`
+Note that you would need to authenticate in order to have access to various endpoints.
+
+Travis: Screenshot of a PR building successfully
+
+---
+
 # Serverless TODO
 
 To implement this project, you need to implement a simple TODO application using AWS Lambda and Serverless framework. Search for all comments starting with the `TODO:` in the code to find the placeholders that you need to implement.
